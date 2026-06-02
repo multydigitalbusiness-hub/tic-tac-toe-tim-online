@@ -3,18 +3,26 @@ import cors from "@fastify/cors";
 import { Server as SocketIOServer } from "socket.io";
 import { createRedis, type RedisHandle } from "./db/redis.js";
 import { loadConfig, type AppConfig } from "./config.js";
-import { registerHealthRoutes } from "./http/routes.js";
+import {
+  registerHealthRoutes,
+  registerErrorHandler,
+  registerRoomRoutes,
+} from "./http/routes.js";
 import { setupSocketAuth } from "./ws/hub.js";
+import { setupGameHandlers } from "./ws/handlers.js";
+import { createGameManager, type GameManager } from "./game/manager.js";
 
 export type ServerDeps = {
   config: AppConfig;
   redis?: RedisHandle;
+  manager?: GameManager;
 };
 
 export type ServerHandle = {
   app: FastifyInstance;
   io: SocketIOServer;
   redis: RedisHandle;
+  manager: GameManager;
   start: () => Promise<void>;
   stop: () => Promise<void>;
   address: () => { port: number; address: string };
@@ -24,6 +32,7 @@ export async function createServer(deps: ServerDeps): Promise<ServerHandle> {
   const { config } = deps;
   const redis = deps.redis ?? createRedis({ url: config.redisUrl, keyPrefix: "ttt:" });
   await redis.ping();
+  const manager = deps.manager ?? createGameManager({ redis });
 
   const app = Fastify({
     logger: config.logLevel === "silent"
@@ -31,12 +40,20 @@ export async function createServer(deps: ServerDeps): Promise<ServerHandle> {
       : { level: config.logLevel },
   });
 
+  registerErrorHandler(app);
+
   await app.register(cors, {
     origin: config.corsOrigins,
     credentials: true,
   });
 
   await app.register(registerHealthRoutes, { redis });
+  await app.register(registerRoomRoutes, {
+    manager,
+    jwtSecret: config.jwtSecret,
+    jwtIssuer: "ttt-server",
+    jwtAudience: "ttt-room",
+  });
 
   const io = new SocketIOServer(app.server, {
     cors: { origin: config.corsOrigins, credentials: true },
@@ -51,10 +68,13 @@ export async function createServer(deps: ServerDeps): Promise<ServerHandle> {
     info: (obj, msg) => app.log.info(obj, msg),
   });
 
+  setupGameHandlers(io, manager);
+
   return {
     app,
     io,
     redis,
+    manager,
     start: async () => {
       await app.listen({ port: config.port, host: "0.0.0.0" });
     },
