@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { Scoreboard } from "./Scoreboard.js";
 
 describe("Scoreboard", () => {
@@ -75,9 +75,9 @@ describe("Scoreboard", () => {
     expect(oBox?.className).not.toMatch(/border-arcade-yellow/);
   });
 
-  it("mostra nome do jogador ou 'AGUARDANDO' para O sem nome", () => {
+  it("mostra nome do jogador ou '—' para O sem nome", () => {
     render(<Scoreboard names={{}} youAre="X" score={null} />);
-    expect(screen.getByText("—")).toBeInTheDocument();
-    expect(screen.getByText("AGUARDANDO...")).toBeInTheDocument();
+    const scoreboardO = screen.getByTestId("scoreboard-o");
+    expect(within(scoreboardO).getByText("—")).toBeInTheDocument();
   });
 });

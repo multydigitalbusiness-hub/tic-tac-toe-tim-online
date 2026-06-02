@@ -56,9 +56,10 @@ export function Room() {
    }
 
    function shareLink() {
-     const baseUrl = import.meta.env.VITE_API_URL ?? window.location.origin;
-     const fullUrl = `${baseUrl}/r/${code}`;
+     const fullUrl = `${window.location.origin}/r/${code}`;
      navigator.clipboard.writeText(fullUrl);
+     setShared(true);
+     setTimeout(() => setShared(false), 1500);
    }
 
   function leave() {
@@ -72,7 +73,7 @@ export function Room() {
       <div className="w-full max-w-md arcade-panel p-5 sm:p-7">
         <div className="flex items-center justify-between mb-4">
           <ConnectionBadge status={game.connection} />
-          <div className="arcade-label text-arcade-cyan">
+          <div className="arcade-label text-arcade-cyan text-[20px]">
             VOCÊ É <span className={game.youAre === "X" ? "text-arcade-primary" : "text-arcade-pink"}>{game.youAre}</span>
           </div>
         </div>

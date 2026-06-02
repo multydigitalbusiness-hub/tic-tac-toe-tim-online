@@ -32,8 +32,8 @@ export function Scoreboard({
         : "";
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex gap-2 items-stretch">
-        <div className={`flex-1 arcade-panel p-3 text-center ${xBorder}`} data-testid="scoreboard-x">
+      <div className="flex justify-between items-stretch">
+        <div className={`flex-none w-[120px] arcade-panel p-3 text-center ${xBorder}`} data-testid="scoreboard-x">
           <div className="flex items-center justify-center gap-2">
             <span className="font-pixel text-2xl text-arcade-primary">X</span>
             <span className="font-pixel text-2xl text-arcade-primary" data-testid="score-x">{xScore}</span>
@@ -46,13 +46,13 @@ export function Scoreboard({
           <div className="text-arcade-muted font-pixel text-xs">VS</div>
           <div className="arcade-label text-arcade-muted/80 text-[8px]" data-testid="score-draws">EMPATES: {draws}</div>
         </div>
-        <div className={`flex-1 arcade-panel p-3 text-center ${oBorder}`} data-testid="scoreboard-o">
+        <div className={`flex-none w-[120px] arcade-panel p-3 text-center ${oBorder}`} data-testid="scoreboard-o">
           <div className="flex items-center justify-center gap-2">
             <span className="font-pixel text-2xl text-arcade-pink">O</span>
             <span className="font-pixel text-2xl text-arcade-pink" data-testid="score-o">{oScore}</span>
           </div>
           <div className="arcade-label text-arcade-muted mt-1 truncate">
-            {names.O ?? "AGUARDANDO..."}
+            {names.O ?? "—"}
           </div>
         </div>
       </div>
