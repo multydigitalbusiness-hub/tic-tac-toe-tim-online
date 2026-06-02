@@ -7,7 +7,7 @@ type AckOk = { ok: true; view: RoomView };
 type AckErr = { ok: false; code: string; message?: string };
 type Ack = AckOk | AckErr;
 
-async function broadcastRoomState(
+export async function broadcastRoomState(
   io: Server,
   manager: GameManager,
   code: string,

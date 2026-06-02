@@ -22,8 +22,10 @@ beforeAll(async () => {
   app = Fastify({ logger: false });
   registerErrorHandler(app);
   await app.register(registerHealthRoutes, { redis });
+  const fakeIo = { in: () => ({ fetchSockets: async () => [] }) } as never;
   await app.register(registerRoomRoutes, {
     manager,
+    io: fakeIo,
     jwtSecret: JWT_SECRET,
     jwtIssuer: ISSUER,
     jwtAudience: AUDIENCE,

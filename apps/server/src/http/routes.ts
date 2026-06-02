@@ -1,10 +1,12 @@
 import type { FastifyInstance, FastifyPluginAsync } from "fastify";
+import type { Server as SocketIOServer } from "socket.io";
 import { z, ZodError } from "zod";
 import { randomUUID } from "node:crypto";
 import { generateRoomCode, isValidRoomCode } from "@ttt/shared";
 import type { RedisHandle } from "../db/redis.js";
 import { type GameManager, RoomError } from "../game/manager.js";
 import { signRoomToken } from "../auth/jwt.js";
+import { broadcastRoomState } from "../ws/handlers.js";
 
 export type JwtConfig = {
   jwtSecret: string;
@@ -53,6 +55,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
 
 export type RoomRoutesDeps = {
   manager: GameManager;
+  io: SocketIOServer;
 } & JwtConfig;
 
 const nameSchema = z.string().trim().min(1).max(20).optional();
@@ -64,7 +67,7 @@ export const registerRoomRoutes: FastifyPluginAsync<RoomRoutesDeps> = async (
   app,
   opts,
 ) => {
-  const { manager, jwtSecret, jwtIssuer, jwtAudience } = opts;
+  const { manager, io, jwtSecret, jwtIssuer, jwtAudience } = opts;
 
   app.post("/api/rooms", async (req, reply) => {
     const body = createBody.parse(req.body ?? {});
@@ -97,6 +100,7 @@ export const registerRoomRoutes: FastifyPluginAsync<RoomRoutesDeps> = async (
       guestId,
       guestName: body.name,
     });
+    await broadcastRoomState(io, manager, params.code);
     const token = await signRoomToken(
       { sub: guestId, code: params.code, role: "O" },
       { secret: jwtSecret, issuer: jwtIssuer, audience: jwtAudience, expiresIn: "6h" },

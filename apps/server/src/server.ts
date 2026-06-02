@@ -48,16 +48,18 @@ export async function createServer(deps: ServerDeps): Promise<ServerHandle> {
   });
 
   await app.register(registerHealthRoutes, { redis });
-  await app.register(registerRoomRoutes, {
-    manager,
-    jwtSecret: config.jwtSecret,
-    jwtIssuer: "ttt-server",
-    jwtAudience: "ttt-room",
-  });
 
   const io = new SocketIOServer(app.server, {
     cors: { origin: config.corsOrigins, credentials: true },
     transports: ["websocket", "polling"],
+  });
+
+  await app.register(registerRoomRoutes, {
+    manager,
+    io,
+    jwtSecret: config.jwtSecret,
+    jwtIssuer: "ttt-server",
+    jwtAudience: "ttt-room",
   });
 
   setupSocketAuth(io, {

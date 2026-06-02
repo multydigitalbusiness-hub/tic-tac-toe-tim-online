@@ -192,4 +192,33 @@ describe("WS game flow", () => {
     xClient.disconnect();
     oClient.disconnect();
   });
+
+  it("X conectado via WS recebe broadcast quando O entra na sala via HTTP", async () => {
+    const create = await http("/api/rooms", { method: "POST", body: JSON.stringify({ name: "Alice" }) });
+    expect(create.status).toBe(201);
+    const { code, token: xToken } = create.body;
+
+    const xClient = await connectClient(xToken);
+
+    const xStates: RoomView[] = [];
+    xClient.on("state", (s: RoomView) => xStates.push(s));
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    const beforeJoin = xStates.length;
+
+    const join = await http(`/api/rooms/${code}/join`, { method: "POST", body: JSON.stringify({ name: "Bob" }) });
+    expect(join.status).toBe(200);
+
+    await new Promise((r) => setTimeout(r, 200));
+
+    const newStates = xStates.slice(beforeJoin);
+    expect(newStates.length).toBeGreaterThan(0);
+    const latest = newStates[newStates.length - 1];
+    expect(latest.state.status).toBe("playing");
+    expect(latest.youAre).toBe("X");
+    expect(latest.names.O).toBe("Bob");
+
+    xClient.disconnect();
+  });
 });
