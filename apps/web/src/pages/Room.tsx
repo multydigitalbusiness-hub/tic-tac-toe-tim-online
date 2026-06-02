@@ -16,7 +16,6 @@ export function Room() {
   const navigate = useNavigate();
   const game = useGameStore();
    const [copied, setCopied] = useState(false);
-   const [shared, setShared] = useState(false);
    const [socket, setSocket] = useState<ReturnType<typeof getSocket> | null>(null);
 
   useEffect(() => {
@@ -60,8 +59,6 @@ export function Room() {
      const baseUrl = import.meta.env.VITE_API_URL ?? window.location.origin;
      const fullUrl = `${baseUrl}/r/${code}`;
      navigator.clipboard.writeText(fullUrl);
-     setShared(true);
-     setTimeout(() => setShared(false), 1500);
    }
 
   function leave() {
@@ -96,7 +93,7 @@ export function Room() {
             </div>
             <button
               type="button"
-              onClick={() => shareLink(code)}
+              onClick={shareLink}
               className="arcade-btn w-full mt-2"
               title="compartilhar link da sala"
               data-testid="share-link-button"

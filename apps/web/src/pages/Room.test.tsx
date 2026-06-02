@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { Room } from "./Room.tsx";
 import { vi } from "vitest";
-import userEvent from "@testing-library/user-event";
 
 describe("Room", () => {
   beforeEach(() => {
