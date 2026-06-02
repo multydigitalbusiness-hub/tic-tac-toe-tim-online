@@ -42,6 +42,14 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ ...baseEnv, REDIS_URL: "http://redis" })).toThrow(ConfigError);
   });
 
+  it("aceita REDIS_URL com protocolo rediss:// (Upstash TLS)", () => {
+    const cfg = loadConfig({
+      ...baseEnv,
+      REDIS_URL: "rediss://default:secret@us1-xyz.upstash.io:6379",
+    });
+    expect(cfg.redisUrl).toBe("rediss://default:secret@us1-xyz.upstash.io:6379");
+  });
+
   it("rejeita CORS_ORIGIN com URL inválida", () => {
     expect(() => loadConfig({ ...baseEnv, CORS_ORIGIN: "not-a-url" })).toThrow(ConfigError);
   });

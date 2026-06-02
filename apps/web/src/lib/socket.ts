@@ -4,6 +4,10 @@ let socket: Socket | null = null;
 
 export type GameSocket = Socket;
 
+export function apiToWsUrl(apiUrl: string): string {
+  return apiUrl.replace(/^http/, "ws");
+}
+
 export function getSocket(baseUrl: string, token: string): GameSocket {
   if (socket && socket.connected) {
     return socket;

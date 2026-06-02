@@ -4,10 +4,11 @@ import { useGameStore } from "../store/gameStore.js";
 import { ConnectionBadge } from "../components/ConnectionBadge.js";
 import { Board } from "../components/Board.js";
 import { useGameSocket } from "../hooks/useGameSocket.js";
-import { getSocket, disposeSocket } from "../lib/socket.js";
+import { getSocket, disposeSocket, apiToWsUrl } from "../lib/socket.js";
 import { isValidRoomCode } from "@ttt/shared";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
+const WS_URL = import.meta.env.VITE_WS_URL ?? apiToWsUrl(API_URL);
 
 export function Room() {
   const { code = "" } = useParams<{ code: string }>();
@@ -25,7 +26,7 @@ export function Room() {
       navigate("/", { replace: true });
       return;
     }
-    const s = getSocket(API_URL, game.token);
+    const s = getSocket(WS_URL, game.token);
     setSocket(s);
     return () => {
       disposeSocket();
