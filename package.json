@@ -22,6 +22,7 @@
     "clean": "turbo run clean && rm -rf node_modules .turbo"
   },
   "devDependencies": {
+    "puppeteer-core": "^25.1.0",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"
   }

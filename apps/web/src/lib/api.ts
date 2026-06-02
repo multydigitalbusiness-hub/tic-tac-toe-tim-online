@@ -1,4 +1,4 @@
-import type { GameState } from "@ttt/shared";
+import type { GameState, Score } from "@ttt/shared";
 
 export class ApiError extends Error {
   constructor(
@@ -15,6 +15,7 @@ export type RoomResponse = {
   code: string;
   token: string;
   state: GameState;
+  score: Score;
   names: { X?: string; O?: string };
   version: number;
 };

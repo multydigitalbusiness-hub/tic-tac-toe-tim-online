@@ -1,4 +1,4 @@
-import type { GameState, Player } from "./engine.js";
+import type { GameState, Player, Score } from "./engine.js";
 
 /** Mensagens enviadas pelo cliente ao servidor via Socket.IO. */
 export type ClientMessage =
@@ -15,6 +15,7 @@ export type ServerMessage =
       t: "state";
       code: string;
       state: GameState;
+      score: Score;
       youAre: Player | null;
       names: { X?: string; O?: string };
       version: number;

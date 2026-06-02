@@ -79,6 +79,7 @@ export const registerRoomRoutes: FastifyPluginAsync<RoomRoutesDeps> = async (
       code,
       token,
       state: view.state,
+      score: view.score,
       names: view.names,
       version: view.version,
     });
@@ -104,6 +105,7 @@ export const registerRoomRoutes: FastifyPluginAsync<RoomRoutesDeps> = async (
       code: params.code,
       token,
       state: view.state,
+      score: view.score,
       names: view.names,
       version: view.version,
     });

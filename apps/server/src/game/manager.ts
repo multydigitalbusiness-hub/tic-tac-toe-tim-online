@@ -7,6 +7,7 @@ import {
   type Board,
   type GameState,
   type Player,
+  type Score,
 } from "@ttt/shared";
 import type { RedisHandle } from "../db/redis.js";
 
@@ -33,6 +34,7 @@ export class RoomError extends Error {
 export type RoomView = {
   code: string;
   state: GameState;
+  score: Score;
   youAre: Player | null;
   names: { X?: string; O?: string };
   version: number;
@@ -74,6 +76,9 @@ type RawGame = {
   line: string;
   ver: string;
   moveCount: string;
+  scoreX: string;
+  scoreO: string;
+  scoreDraw: string;
   createdAt?: string;
 };
 
@@ -116,6 +121,11 @@ export function createGameManager(deps: GameDeps): GameManager {
     return {
       code,
       state,
+      score: {
+        X: parseInt(data.scoreX ?? "0", 10),
+        O: parseInt(data.scoreO ?? "0", 10),
+        draws: parseInt(data.scoreDraw ?? "0", 10),
+      },
       youAre,
       names,
       version: parseInt(data.ver, 10),
@@ -158,6 +168,9 @@ export function createGameManager(deps: GameDeps): GameManager {
       line: "",
       ver: "0",
       moveCount: "0",
+      scoreX: "0",
+      scoreO: "0",
+      scoreDraw: "0",
       createdAt: String(Date.now()),
     });
     await redis.client.expire(k(opts.code), GAME_TTL_SECONDS);
@@ -236,6 +249,11 @@ export function createGameManager(deps: GameDeps): GameManager {
       ver: String(parseInt(data.ver, 10) + 1),
       moveCount: String(nextState.moveCount),
     });
+    if (nextState.status === "finished") {
+      if (nextState.winner === "X") await redis.client.hincrby(k(opts.code), "scoreX", 1);
+      else if (nextState.winner === "O") await redis.client.hincrby(k(opts.code), "scoreO", 1);
+      else if (nextState.winner === "draw") await redis.client.hincrby(k(opts.code), "scoreDraw", 1);
+    }
     await redis.client.expire(k(opts.code), GAME_TTL_SECONDS);
     await redis.client.sadd(movesK(opts.code), opts.moveId);
     await redis.client.expire(movesK(opts.code), MOVES_TTL_SECONDS);

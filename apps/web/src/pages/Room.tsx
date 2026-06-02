@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useGameStore } from "../store/gameStore.js";
 import { ConnectionBadge } from "../components/ConnectionBadge.js";
 import { Board } from "../components/Board.js";
+import { Scoreboard } from "../components/Scoreboard.js";
 import { useGameSocket } from "../hooks/useGameSocket.js";
 import { getSocket, disposeSocket, apiToWsUrl } from "../lib/socket.js";
 import { isValidRoomCode } from "@ttt/shared";
@@ -100,7 +101,7 @@ export function Room() {
           {isOver && <GameOverOverlay state={state} youAre={game.youAre} onRestart={restart} />}
         </div>
 
-        <Scoreboard names={game.names} youAre={game.youAre} />
+        <Scoreboard names={game.names} youAre={game.youAre} score={game.score} />
 
         <button type="button" className="arcade-btn w-full mt-4" onClick={leave}>
           ◄ EXIT · VOLTAR AO MENU
@@ -169,34 +170,6 @@ function GameOverOverlay({
       >
         ► JOGAR DE NOVO
       </button>
-    </div>
-  );
-}
-
-function Scoreboard({
-  names,
-  youAre,
-}: {
-  names: ReturnType<typeof useGameStore.getState>["names"];
-  youAre: ReturnType<typeof useGameStore.getState>["youAre"];
-}) {
-  const x = (
-    <div className={`flex-1 arcade-panel p-2 text-center ${youAre === "X" ? "border-arcade-primary" : ""}`}>
-      <div className="font-pixel text-xl text-arcade-primary">X</div>
-      <div className="arcade-label text-arcade-muted mt-1 truncate">{names.X ?? "—"}</div>
-    </div>
-  );
-  const o = (
-    <div className={`flex-1 arcade-panel p-2 text-center ${youAre === "O" ? "border-arcade-pink" : ""}`}>
-      <div className="font-pixel text-xl text-arcade-pink">O</div>
-      <div className="arcade-label text-arcade-muted mt-1 truncate">{names.O ?? "AGUARDANDO..."}</div>
-    </div>
-  );
-  return (
-    <div className="flex gap-2">
-      {x}
-      <div className="flex items-center text-arcade-muted font-pixel text-xs">VS</div>
-      {o}
     </div>
   );
 }

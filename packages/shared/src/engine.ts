@@ -4,6 +4,8 @@ export type Board = readonly Cell[];
 
 export type GameStatus = "waiting" | "playing" | "finished";
 
+export type Score = { X: number; O: number; draws: number };
+
 export type GameState = {
   readonly board: Board;
   readonly turn: Player;

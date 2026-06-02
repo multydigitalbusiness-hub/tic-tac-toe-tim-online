@@ -59,6 +59,11 @@ describe("POST /api/rooms", () => {
     expect(body.state.status).toBe("waiting");
   });
 
+  it("retorna score inicial zerado", async () => {
+    const body = await createRoom("Alice");
+    expect(body.score).toEqual({ X: 0, O: 0, draws: 0 });
+  });
+
   it("token decodifica para role X e o code correto", async () => {
     const { code, token } = await createRoom();
     const payload = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString());

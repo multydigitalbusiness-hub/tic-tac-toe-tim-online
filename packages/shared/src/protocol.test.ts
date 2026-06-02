@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { generateRoomCode, isValidRoomCode } from "./protocol.js";
+import { generateRoomCode, isValidRoomCode, type ServerMessage } from "./protocol.js";
+import { newGame } from "./engine.js";
 
 describe("generateRoomCode", () => {
   it("gera string de 6 caracteres por padrão", () => {
@@ -41,5 +42,20 @@ describe("isValidRoomCode", () => {
     ["", "vazio"],
   ])("rejeita código inválido: %s (%s)", (code) => {
     expect(isValidRoomCode(code)).toBe(false);
+  });
+});
+
+describe("ServerMessage.state", () => {
+  it("inclui score no payload state", () => {
+    const msg: ServerMessage = {
+      t: "state",
+      code: "ABC234",
+      state: newGame(),
+      score: { X: 0, O: 0, draws: 0 },
+      youAre: "X",
+      names: {},
+      version: 0,
+    };
+    expect(msg.score).toEqual({ X: 0, O: 0, draws: 0 });
   });
 });

@@ -3,7 +3,7 @@ import { renderHook, act } from "@testing-library/react";
 import { useGameSocket } from "./useGameSocket.js";
 import { useGameStore } from "../store/gameStore.js";
 import type { Socket } from "socket.io-client";
-import type { GameState } from "@ttt/shared";
+import type { GameState, Score } from "@ttt/shared";
 
 function makeMockSocket() {
   const handlers: Record<string, ((...args: unknown[]) => void)[]> = {};
@@ -23,6 +23,8 @@ function makeMockSocket() {
   } as unknown as Socket & { fire: (e: string, ...a: unknown[]) => void };
 }
 
+const SCORE: Score = { X: 0, O: 0, draws: 0 };
+
 const STATE: GameState = {
   board: ["X", null, null, null, null, null, null, null, null],
   turn: "O",
@@ -30,6 +32,15 @@ const STATE: GameState = {
   winner: null,
   line: null,
   moveCount: 1,
+};
+
+const VIEW = {
+  code: "ABC234",
+  state: STATE,
+  score: SCORE,
+  youAre: "X" as const,
+  names: {} as { X?: string; O?: string },
+  version: 1,
 };
 
 beforeEach(() => {
@@ -46,8 +57,30 @@ describe("useGameSocket", () => {
   it("atualiza o store quando recebe state do servidor", () => {
     const sock = makeMockSocket();
     renderHook(() => useGameSocket(sock));
-    act(() => sock.fire("state", STATE));
+    act(() => sock.fire("state", VIEW));
     expect(useGameStore.getState().state).toEqual(STATE);
+  });
+
+  it("extrai score do view e atualiza o store", () => {
+    const sock = makeMockSocket();
+    renderHook(() => useGameSocket(sock));
+    act(() => sock.fire("state", { ...VIEW, score: { X: 1, O: 0, draws: 0 } }));
+    expect(useGameStore.getState().score).toEqual({ X: 1, O: 0, draws: 0 });
+  });
+
+  it("usa version do servidor (não local counter)", () => {
+    const sock = makeMockSocket();
+    renderHook(() => useGameSocket(sock));
+    act(() => sock.fire("state", { ...VIEW, version: 42 }));
+    expect(useGameStore.getState().version).toBe(42);
+  });
+
+  it("atualiza youAre e names do view", () => {
+    const sock = makeMockSocket();
+    renderHook(() => useGameSocket(sock));
+    act(() => sock.fire("state", { ...VIEW, youAre: "O", names: { O: "Bob" } }));
+    expect(useGameStore.getState().youAre).toBe("O");
+    expect(useGameStore.getState().names.O).toBe("Bob");
   });
 
   it("marca conexão como connected no evento connect", () => {

@@ -1,13 +1,21 @@
 import { useEffect, useCallback } from "react";
 import type { Socket } from "socket.io-client";
-import type { GameState } from "@ttt/shared";
-import { useGameStore } from "../store/gameStore.js";
+import type { GameState, Player, Score } from "@ttt/shared";
+import { useGameStore, type Names } from "../store/gameStore.js";
 
 let counter = 0;
 function makeMoveId(): string {
   counter += 1;
   return `${Date.now()}-${counter}-${Math.random().toString(36).slice(2, 8)}`;
 }
+
+type RoomView = {
+  state: GameState;
+  score: Score;
+  youAre: Player | null;
+  names: Names;
+  version: number;
+};
 
 export type GameSocketApi = {
   play: (position: number) => void;
@@ -20,24 +28,26 @@ export function useGameSocket(socket: Socket): GameSocketApi {
   const setError = useGameStore((s) => s.setError);
 
   useEffect(() => {
-    function onState(state: GameState) {
-      const prev = useGameStore.getState();
+    if (!socket) return;
+
+    function onState(view: RoomView) {
       updateState({
-        state,
-        youAre: prev.youAre,
-        names: prev.names,
-        version: prev.version + 1,
+        state: view.state,
+        score: view.score,
+        youAre: view.youAre,
+        names: view.names,
+        version: view.version,
       });
     }
     function onConnect() {
       setConnection("connected");
-      socket.emit("state", {});
+      socket!.emit("state", {});
     }
     function onDisconnect() {
       setConnection("disconnected");
     }
     function onReconnectAttempt() {
-      setConnection(socket.connected ? "connected" : "reconnecting");
+      setConnection(socket!.connected ? "connected" : "reconnecting");
     }
     function onError(payload: { message?: string }) {
       setError(payload?.message ?? "erro de conexão");
@@ -63,12 +73,14 @@ export function useGameSocket(socket: Socket): GameSocketApi {
 
   const play = useCallback(
     (position: number) => {
+      if (!socket) return;
       socket.emit("move", { pos: position, id: makeMoveId() });
     },
     [socket],
   );
 
   const restart = useCallback(() => {
+    if (!socket) return;
     socket.emit("restart", {});
   }, [socket]);
 

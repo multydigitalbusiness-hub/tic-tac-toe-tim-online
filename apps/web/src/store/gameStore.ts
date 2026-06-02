@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ConnectionStatus, GameState, Player } from "@ttt/shared";
+import type { ConnectionStatus, GameState, Player, Score } from "@ttt/shared";
 
 export type Names = { X?: string; O?: string };
 
@@ -7,6 +7,7 @@ type GameStore = {
   code: string | null;
   token: string | null;
   state: GameState | null;
+  score: Score | null;
   youAre: Player | null;
   names: Names;
   version: number;
@@ -17,12 +18,14 @@ type GameStore = {
     code: string;
     token: string;
     state: GameState;
+    score: Score;
     youAre: Player | null;
     names: Names;
     version: number;
   }) => void;
   updateState: (data: {
     state: GameState;
+    score: Score;
     youAre: Player | null;
     names: Names;
     version: number;
@@ -36,6 +39,7 @@ const INITIAL = {
   code: null as string | null,
   token: null as string | null,
   state: null as GameState | null,
+  score: null as Score | null,
   youAre: null as Player | null,
   names: {} as Names,
   version: 0,
@@ -51,6 +55,7 @@ export const useGameStore = create<GameStore>((set) => ({
       code: data.code,
       token: data.token,
       state: data.state,
+      score: data.score,
       youAre: data.youAre,
       names: data.names,
       version: data.version,
@@ -62,6 +67,7 @@ export const useGameStore = create<GameStore>((set) => ({
       if (data.version < prev.version) return prev;
       return {
         state: data.state,
+        score: data.score,
         youAre: data.youAre,
         names: data.names,
         version: data.version,

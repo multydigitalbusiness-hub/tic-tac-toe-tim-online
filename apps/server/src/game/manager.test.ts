@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import { createRedis, type RedisHandle } from "../db/redis.js";
 import { createGameManager, RoomError, type GameManager } from "./manager.js";
-import { generateRoomCode, newGame, type Player } from "@ttt/shared";
+import { generateRoomCode, newGame, type Player, type Score } from "@ttt/shared";
 
 let redis: RedisHandle;
 let manager: GameManager;
@@ -53,6 +53,11 @@ describe("createRoom", () => {
     const v1 = await manager.joinRoom({ code, guestId: "guest-1" });
     expect(v1.version).toBeGreaterThan(v0.version);
   });
+
+  it("inicializa score como zero", async () => {
+    const view = await manager.createRoom({ code, hostId: "host-1" });
+    expect(view.score).toEqual({ X: 0, O: 0, draws: 0 });
+  });
 });
 
 describe("getRoom", () => {
@@ -79,6 +84,13 @@ describe("getRoom", () => {
     await manager.joinRoom({ code, guestId: "guest-1" });
     const view = await manager.getRoomAs(code, "guest-1");
     expect(view!.youAre).toBe("O");
+  });
+
+  it("getRoom mantém score após join", async () => {
+    await manager.createRoom({ code, hostId: "host-1" });
+    await manager.joinRoom({ code, guestId: "guest-1" });
+    const view = await manager.getRoomAs(code, "host-1");
+    expect(view!.score).toEqual({ X: 0, O: 0, draws: 0 });
   });
 });
 
@@ -190,6 +202,54 @@ describe("playMove", () => {
     await expect(manager.playMove({ code: "NOEXST", userId: "h", pos: 0, moveId: "m1" }))
       .rejects.toMatchObject({ code: "NOT_FOUND" });
   });
+
+  it("incrementa scoreX quando X vence", async () => {
+    await manager.createRoom({ code, hostId: "host-1" });
+    await manager.joinRoom({ code, guestId: "guest-1" });
+    for (const m of [{ u: "host-1", p: 0, id: "m1" }, { u: "guest-1", p: 3, id: "m2" }, { u: "host-1", p: 1, id: "m3" }, { u: "guest-1", p: 4, id: "m4" }, { u: "host-1", p: 2, id: "m5" }]) {
+      await manager.playMove({ code, userId: m.u, pos: m.p, moveId: m.id });
+    }
+    const view = await manager.getRoomAs(code, "host-1");
+    expect(view!.score).toEqual({ X: 1, O: 0, draws: 0 });
+  });
+
+  it("incrementa scoreO quando O vence", async () => {
+    await manager.createRoom({ code, hostId: "host-1" });
+    await manager.joinRoom({ code, guestId: "guest-1" });
+    for (const m of [{ u: "host-1", p: 0, id: "m1" }, { u: "guest-1", p: 3, id: "m2" }, { u: "host-1", p: 1, id: "m3" }, { u: "guest-1", p: 4, id: "m4" }, { u: "host-1", p: 6, id: "m5" }, { u: "guest-1", p: 5, id: "m6" }]) {
+      await manager.playMove({ code, userId: m.u, pos: m.p, moveId: m.id });
+    }
+    const view = await manager.getRoomAs(code, "guest-1");
+    expect(view!.score).toEqual({ X: 0, O: 1, draws: 0 });
+  });
+
+  it("incrementa draws em empate", async () => {
+    await manager.createRoom({ code, hostId: "host-1" });
+    await manager.joinRoom({ code, guestId: "guest-1" });
+    const moves = [
+      { u: "host-1", p: 1, id: "m1" }, { u: "guest-1", p: 0, id: "m2" },
+      { u: "host-1", p: 3, id: "m3" }, { u: "guest-1", p: 2, id: "m4" },
+      { u: "host-1", p: 4, id: "m5" }, { u: "guest-1", p: 5, id: "m6" },
+      { u: "host-1", p: 6, id: "m7" }, { u: "guest-1", p: 7, id: "m8" },
+      { u: "host-1", p: 8, id: "m9" },
+    ];
+    for (const m of moves) {
+      await manager.playMove({ code, userId: m.u, pos: m.p, moveId: m.id });
+    }
+    const view = await manager.getRoomAs(code, "host-1");
+    expect(view!.score).toEqual({ X: 0, O: 0, draws: 1 });
+  });
+
+  it("jogada idempotente não duplica score", async () => {
+    await manager.createRoom({ code, hostId: "host-1" });
+    await manager.joinRoom({ code, guestId: "guest-1" });
+    for (const m of [{ u: "host-1", p: 0, id: "m1" }, { u: "guest-1", p: 3, id: "m2" }, { u: "host-1", p: 1, id: "m3" }, { u: "guest-1", p: 4, id: "m4" }, { u: "host-1", p: 2, id: "m5" }]) {
+      await manager.playMove({ code, userId: m.u, pos: m.p, moveId: m.id });
+    }
+    await manager.playMove({ code, userId: "host-1", pos: 2, moveId: "m5" });
+    const view = await manager.getRoomAs(code, "host-1");
+    expect(view!.score).toEqual({ X: 1, O: 0, draws: 0 });
+  });
 });
 
 describe("restartGame", () => {
@@ -233,5 +293,23 @@ describe("restartGame", () => {
     await finishGame();
     await expect(manager.restartGame({ code, userId: "intruder" }))
       .rejects.toMatchObject({ code: "NOT_PLAYER" });
+  });
+
+  it("preserva score após restart", async () => {
+    await finishGame();
+    const before = await manager.getRoomAs(code, "host-1");
+    expect(before!.score).toEqual({ X: 1, O: 0, draws: 0 });
+    const view = await manager.restartGame({ code, userId: "host-1" });
+    expect(view.score).toEqual({ X: 1, O: 0, draws: 0 });
+  });
+
+  it("acumula score em múltiplas rodadas", async () => {
+    await finishGame();
+    await manager.restartGame({ code, userId: "host-1" });
+    for (const m of [{ u: "host-1", p: 0, id: "n1" }, { u: "guest-1", p: 3, id: "n2" }, { u: "host-1", p: 1, id: "n3" }, { u: "guest-1", p: 4, id: "n4" }, { u: "host-1", p: 2, id: "n5" }]) {
+      await manager.playMove({ code, userId: m.u, pos: m.p, moveId: m.id });
+    }
+    const view = await manager.getRoomAs(code, "host-1");
+    expect(view!.score).toEqual({ X: 2, O: 0, draws: 0 });
   });
 });
