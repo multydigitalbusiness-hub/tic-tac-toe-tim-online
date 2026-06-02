@@ -15,14 +15,7 @@ node_modules
 **/tsconfig.*.tsbuildinfo
 **/.cache
 apps/web
-apps/server/src
-apps/server/test
-apps/server/coverage
-apps/server/.env
-apps/server/.env.local
-packages/shared/src
-packages/shared/test
-packages/shared/coverage
+
 README.md
 *.md
 scripts

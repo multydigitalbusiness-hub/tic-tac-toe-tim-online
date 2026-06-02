@@ -15,8 +15,9 @@ export function Room() {
   const { code = "" } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const game = useGameStore();
-  const [copied, setCopied] = useState(false);
-  const [socket, setSocket] = useState<ReturnType<typeof getSocket> | null>(null);
+   const [copied, setCopied] = useState(false);
+   const [shared, setShared] = useState(false);
+   const [socket, setSocket] = useState<ReturnType<typeof getSocket> | null>(null);
 
   useEffect(() => {
     if (!isValidRoomCode(code)) {
@@ -49,11 +50,19 @@ export function Room() {
   const boardDisabled = state.status !== "playing" || !isMyTurn;
   const isOver = state.status === "finished";
 
-  function copyCode() {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
+   function copyCode() {
+     navigator.clipboard.writeText(code);
+     setCopied(true);
+     setTimeout(() => setCopied(false), 1500);
+   }
+
+   function shareLink() {
+     const baseUrl = import.meta.env.VITE_API_URL ?? window.location.origin;
+     const fullUrl = `${baseUrl}/r/${code}`;
+     navigator.clipboard.writeText(fullUrl);
+     setShared(true);
+     setTimeout(() => setShared(false), 1500);
+   }
 
   function leave() {
     disposeSocket();
@@ -73,18 +82,27 @@ export function Room() {
 
         <div className="text-center mb-3">
           <div className="arcade-label text-arcade-muted mb-1">CÓDIGO DA SALA</div>
-          <button
-            type="button"
-            onClick={copyCode}
-            className="font-pixel text-2xl sm:text-3xl tracking-[0.35em] text-arcade-yellow
-                       hover:text-arcade-gold transition-colors select-all"
-            title="clique para copiar"
-          >
-            {code}
-          </button>
-          <div className="arcade-label text-arcade-muted/60 h-4 mt-1">
-            {copied ? "✓ COPIADO!" : "clique para copiar"}
-          </div>
+           <button
+             type="button"
+             onClick={copyCode}
+             className="font-pixel text-2xl sm:text-3xl tracking-[0.35em] text-arcade-yellow
+                        hover:text-arcade-gold transition-colors select-all"
+             title="clique para copiar"
+           >
+             {code}
+           </button>
+            <div className="arcade-label text-arcade-muted/60 h-4 mt-1">
+              {copied ? "✓ COPIADO!" : "clique para copiar"}
+            </div>
+            <button
+              type="button"
+              onClick={() => shareLink(code)}
+              className="arcade-btn w-full mt-2"
+              title="compartilhar link da sala"
+              data-testid="share-link-button"
+            >
+              📤 COMPARTILHAR
+            </button>
         </div>
 
         <div className="arcade-divider mb-4" />
