@@ -35,6 +35,63 @@
   }
 }
 
+.arcade-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+  aspect-ratio: 1;
+  background: #160538;
+  padding: 8px;
+  border: 2px solid #2a0a5e;
+  box-shadow:
+    inset 0 0 24px rgba(185, 103, 255, 0.25),
+    0 0 24px rgba(1, 205, 254, 0.2);
+  position: relative;
+}
+
+.arcade-cell {
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(1.5rem, 8vw, 3rem);
+  background: #0d0221;
+  color: #fff;
+  border: 2px solid #2a0a5e;
+  box-shadow: inset 0 0 12px rgba(1, 205, 254, 0.15);
+  cursor: pointer;
+  transition: transform 0.08s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.arcade-cell:hover:not(:disabled) {
+  background: #1a0840;
+  box-shadow:
+    inset 0 0 16px rgba(57, 255, 20, 0.4),
+    0 0 10px rgba(57, 255, 20, 0.3);
+}
+
+.arcade-cell:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.arcade-cell:disabled {
+  cursor: default;
+}
+
+.arcade-cell-winning {
+  background: rgba(255, 113, 206, 0.15) !important;
+  border-color: #ff71ce !important;
+  box-shadow:
+    inset 0 0 20px rgba(255, 113, 206, 0.6),
+    0 0 18px rgba(255, 113, 206, 0.7) !important;
+  color: #fff200 !important;
+}
+
 @layer components {
   .arcade-panel {
     @apply relative border-2 border-arcade-line bg-arcade-surface/80 backdrop-blur-sm;
