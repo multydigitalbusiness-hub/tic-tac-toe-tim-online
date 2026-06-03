@@ -4,8 +4,10 @@ import { useGameStore } from "../store/gameStore.js";
 import { ConnectionBadge } from "../components/ConnectionBadge.js";
 import { Board } from "../components/Board.js";
 import { Scoreboard } from "../components/Scoreboard.js";
+import { JoinGate, type JoinError } from "../components/JoinGate.js";
 import { useGameSocket } from "../hooks/useGameSocket.js";
 import { getSocket, disposeSocket, apiToWsUrl } from "../lib/socket.js";
+import { joinRoom, ApiError } from "../lib/api.js";
 import { isValidRoomCode } from "@ttt/shared";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
@@ -15,24 +17,66 @@ export function Room() {
   const { code = "" } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const game = useGameStore();
-   const [copied, setCopied] = useState(false);
-   const [socket, setSocket] = useState<ReturnType<typeof getSocket> | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [socket, setSocket] = useState<ReturnType<typeof getSocket> | null>(null);
+  const [joinBusy, setJoinBusy] = useState(false);
+  const [joinError, setJoinError] = useState<JoinError | null>(null);
+
+  const hasRoomToken = Boolean(game.token) && game.code === code;
 
   useEffect(() => {
     if (!isValidRoomCode(code)) {
       navigate("/", { replace: true });
       return;
     }
-    if (!game.token) {
-      navigate("/", { replace: true });
-      return;
+    if (!hasRoomToken) {
+      return; // mostra o JoinGate; não conecta ainda
     }
-    const s = getSocket(WS_URL, game.token);
+    const s = getSocket(WS_URL, game.token as string);
     setSocket(s);
     return () => {
       disposeSocket();
     };
-  }, [code, game.token, navigate]);
+  }, [code, hasRoomToken, game.token, navigate]);
+
+  async function handleJoin(name?: string) {
+    setJoinError(null);
+    setJoinBusy(true);
+    try {
+      const res = await joinRoom(API_URL, { code, name });
+      game.setRoom({
+        code: res.code,
+        token: res.token,
+        state: res.state,
+        score: res.score,
+        youAre: "O",
+        names: res.names,
+        version: res.version,
+      });
+    } catch (e) {
+      if (e instanceof ApiError) setJoinError({ code: e.code, message: e.message });
+      else setJoinError({ code: "INTERNAL", message: "erro ao entrar" });
+    } finally {
+      setJoinBusy(false);
+    }
+  }
+
+  function handleBack() {
+    game.reset();
+    navigate("/");
+  }
+
+  if (!hasRoomToken) {
+    return (
+      <JoinGate
+        code={code}
+        busy={joinBusy}
+        error={joinError}
+        onJoin={handleJoin}
+        onBack={handleBack}
+      />
+    );
+  }
 
   const { play, restart } = useGameSocket(socket as Parameters<typeof useGameSocket>[0]);
 
