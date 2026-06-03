@@ -58,8 +58,6 @@ export function Room() {
    function shareLink() {
      const fullUrl = `${window.location.origin}/r/${code}`;
      navigator.clipboard.writeText(fullUrl);
-     setShared(true);
-     setTimeout(() => setShared(false), 1500);
    }
 
   function leave() {
