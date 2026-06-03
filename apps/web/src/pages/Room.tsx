@@ -39,6 +39,8 @@ export function Room() {
     };
   }, [code, hasRoomToken, game.token, navigate]);
 
+  const { play, restart } = useGameSocket(socket as Parameters<typeof useGameSocket>[0]);
+
   async function handleJoin(name?: string) {
     setJoinError(null);
     setJoinBusy(true);
@@ -77,8 +79,6 @@ export function Room() {
       />
     );
   }
-
-  const { play, restart } = useGameSocket(socket as Parameters<typeof useGameSocket>[0]);
 
   if (!socket || !game.state) {
     return (
