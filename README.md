@@ -121,7 +121,7 @@ fly launch --no-deploy --copy-config  # detecta Dockerfile em apps/server
 fly secrets set \
   REDIS_URL='rediss://default:...' \
   JWT_SECRET="$(openssl rand -hex 32)" \
-  CORS_ORIGIN='https://tic-tac-toe-tim-online.vercel.app'
+  CORS_ORIGIN='https://tic-tac-toe-tim-online-web.vercel.app'
 
 # deploy
 fly deploy
@@ -143,18 +143,21 @@ curl https://tic-tac-toe-tim-online.fly.dev/health
    - `VITE_API_URL` = `https://tic-tac-toe-tim-online.fly.dev`
 4. Deploy.
 
-Saída: `https://tic-tac-toe-tim-online.vercel.app`
+Saída: `https://tic-tac-toe-tim-online-web.vercel.app`
+> O Vercel nomeia o projeto como `tic-tac-toe-tim-online-web`, então o domínio
+> de produção inclui o sufixo `-web`. Se preferir a URL sem o sufixo, configure
+> um domínio/alias customizado no painel do Vercel.
 
 **Voltar no Fly** e adicionar a URL da Vercel no CORS:
 ```bash
-fly secrets set CORS_ORIGIN='https://tic-tac-toe-tim-online.vercel.app,https://tic-tac-toe-tim-online-*.vercel.app'
+fly secrets set CORS_ORIGIN='https://tic-tac-toe-tim-online-web.vercel.app,https://tic-tac-toe-tim-online-web-*.vercel.app'
 # (Vercel gera subdomínios por branch — o curinga * cobre previews.
 #  O `*` casa um único rótulo de subdomínio, sem atravessar pontos.)
 ```
 
 ### 4. Smoke test em produção
 
-1. Abra `https://tic-tac-toe-tim-online.vercel.app/` em 2 abas/celulares diferentes.
+1. Abra `https://tic-tac-toe-tim-online-web.vercel.app/` em 2 abas/celulares diferentes.
 2. Aba 1: clique **PRESS START** → copia o código de 6 caracteres.
 3. Aba 2: cole o código em **INSERT COIN** → entra.
 4. Jogue — ambos veem o tabuleiro atualizar em tempo real.
