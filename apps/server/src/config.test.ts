@@ -58,6 +58,44 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ ...baseEnv, JWT_SECRET: "short" })).toThrow(ConfigError);
   });
 
+  it("rejeita o JWT_SECRET default conhecido em produção", () => {
+    expect(() =>
+      loadConfig({
+        ...baseEnv,
+        NODE_ENV: "production",
+        JWT_SECRET: "dev-secret-change-me-in-production-please",
+      }),
+    ).toThrow(ConfigError);
+  });
+
+  it("aceita o JWT_SECRET default em desenvolvimento", () => {
+    const cfg = loadConfig({
+      ...baseEnv,
+      NODE_ENV: "development",
+      JWT_SECRET: "dev-secret-change-me-in-production-please",
+    });
+    expect(cfg.jwtSecret).toBe("dev-secret-change-me-in-production-please");
+  });
+
+  it("rejeita JWT_SECRET de baixa entropia (poucos caracteres distintos) em produção", () => {
+    expect(() =>
+      loadConfig({
+        ...baseEnv,
+        NODE_ENV: "production",
+        JWT_SECRET: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      }),
+    ).toThrow(ConfigError);
+  });
+
+  it("aceita JWT_SECRET forte em produção", () => {
+    const cfg = loadConfig({
+      ...baseEnv,
+      NODE_ENV: "production",
+      JWT_SECRET: "9f8b2c1a7d4e6f0b3a5c8e1d2f4a6b8c",
+    });
+    expect(cfg.jwtSecret).toBe("9f8b2c1a7d4e6f0b3a5c8e1d2f4a6b8c");
+  });
+
   it("parseia múltiplas origens CORS separadas por vírgula", () => {
     const cfg = loadConfig({
       ...baseEnv,

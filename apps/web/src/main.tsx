@@ -1,13 +1,20 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
-import { useGameStore } from "./store/gameStore.js";
+import { useGameStore, loadPersistedSession } from "./store/gameStore.js";
 import "./index.css";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("root element not found");
 
+// Restaura a sessão (token/code) após um reload de página, evitando que o
+// jogador seja expulso da própria sala.
 if (typeof window !== "undefined") {
+  loadPersistedSession();
+}
+
+// Hooks de teste/E2E: expostos apenas em desenvolvimento.
+if (import.meta.env.DEV && typeof window !== "undefined") {
   (window as unknown as { __ttt?: unknown }).__ttt = { store: useGameStore };
   const w = window as unknown as {
     __INIT_STORE__?: {
