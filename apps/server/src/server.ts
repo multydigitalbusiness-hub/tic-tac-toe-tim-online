@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
 import { Server as SocketIOServer } from "socket.io";
 import { createRedis, type RedisHandle } from "./db/redis.js";
 import { loadConfig, type AppConfig } from "./config.js";
@@ -11,6 +12,7 @@ import {
 import { setupSocketAuth } from "./ws/hub.js";
 import { setupGameHandlers } from "./ws/handlers.js";
 import { createGameManager, type GameManager } from "./game/manager.js";
+import { buildCorsOrigin } from "./http/cors.js";
 
 export type ServerDeps = {
   config: AppConfig;
@@ -42,16 +44,21 @@ export async function createServer(deps: ServerDeps): Promise<ServerHandle> {
 
   registerErrorHandler(app);
 
+  await app.register(helmet, { contentSecurityPolicy: false });
+
+  const corsOrigin = buildCorsOrigin(config.corsOrigins);
+
   await app.register(cors, {
-    origin: config.corsOrigins,
+    origin: corsOrigin,
     credentials: true,
   });
 
   await app.register(registerHealthRoutes, { redis });
 
   const io = new SocketIOServer(app.server, {
-    cors: { origin: config.corsOrigins, credentials: true },
+    cors: { origin: corsOrigin, credentials: true },
     transports: ["websocket", "polling"],
+    maxHttpBufferSize: 4 * 1024, // 4 KB: payloads do jogo são minúsculos
   });
 
   await app.register(registerRoomRoutes, {

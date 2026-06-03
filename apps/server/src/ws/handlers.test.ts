@@ -131,6 +131,70 @@ describe("WS game flow", () => {
     oClient.disconnect();
   });
 
+  it("rejeita move com payload malformado (pos fora do range) com BAD_PAYLOAD", async () => {
+    const create = await http("/api/rooms", { method: "POST", body: "{}" });
+    const { code, token: xToken } = create.body;
+    const join = await http(`/api/rooms/${code}/join`, { method: "POST", body: "{}" });
+    await connectClient(join.body.token);
+    const xClient = await connectClient(xToken);
+
+    const ack = await new Promise<any>((resolve) => {
+      xClient.emit("move", { pos: 99, id: "m1" }, (a: any) => resolve(a));
+    });
+    expect(ack.ok).toBe(false);
+    expect(ack.code).toBe("BAD_PAYLOAD");
+
+    xClient.disconnect();
+  });
+
+  it("rejeita move sem id com BAD_PAYLOAD", async () => {
+    const create = await http("/api/rooms", { method: "POST", body: "{}" });
+    const { code, token: xToken } = create.body;
+    const join = await http(`/api/rooms/${code}/join`, { method: "POST", body: "{}" });
+    await connectClient(join.body.token);
+    const xClient = await connectClient(xToken);
+
+    const ack = await new Promise<any>((resolve) => {
+      xClient.emit("move", { pos: 0 }, (a: any) => resolve(a));
+    });
+    expect(ack.ok).toBe(false);
+    expect(ack.code).toBe("BAD_PAYLOAD");
+
+    xClient.disconnect();
+  });
+
+  it("rejeita move com moveId gigante com BAD_PAYLOAD", async () => {
+    const create = await http("/api/rooms", { method: "POST", body: "{}" });
+    const { code, token: xToken } = create.body;
+    const join = await http(`/api/rooms/${code}/join`, { method: "POST", body: "{}" });
+    await connectClient(join.body.token);
+    const xClient = await connectClient(xToken);
+
+    const ack = await new Promise<any>((resolve) => {
+      xClient.emit("move", { pos: 0, id: "x".repeat(200) }, (a: any) => resolve(a));
+    });
+    expect(ack.ok).toBe(false);
+    expect(ack.code).toBe("BAD_PAYLOAD");
+
+    xClient.disconnect();
+  });
+
+  it("rejeita move com pos não-inteiro com BAD_PAYLOAD", async () => {
+    const create = await http("/api/rooms", { method: "POST", body: "{}" });
+    const { code, token: xToken } = create.body;
+    const join = await http(`/api/rooms/${code}/join`, { method: "POST", body: "{}" });
+    await connectClient(join.body.token);
+    const xClient = await connectClient(xToken);
+
+    const ack = await new Promise<any>((resolve) => {
+      xClient.emit("move", { pos: 1.5, id: "m1" }, (a: any) => resolve(a));
+    });
+    expect(ack.ok).toBe(false);
+    expect(ack.code).toBe("BAD_PAYLOAD");
+
+    xClient.disconnect();
+  });
+
   it("restart reseta o tabuleiro para ambos jogadores", async () => {
     const create = await http("/api/rooms", { method: "POST", body: "{}" });
     const { code, token: xToken } = create.body;

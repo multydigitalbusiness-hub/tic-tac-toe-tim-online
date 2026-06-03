@@ -148,7 +148,8 @@ Saída: `https://tic-tac-toe-tim-online.vercel.app`
 **Voltar no Fly** e adicionar a URL da Vercel no CORS:
 ```bash
 fly secrets set CORS_ORIGIN='https://tic-tac-toe-tim-online.vercel.app,https://tic-tac-toe-tim-online-*.vercel.app'
-# (Vercel gera subdomínios por branch — o curinga * cobre previews)
+# (Vercel gera subdomínios por branch — o curinga * cobre previews.
+#  O `*` casa um único rótulo de subdomínio, sem atravessar pontos.)
 ```
 
 ### 4. Smoke test em produção

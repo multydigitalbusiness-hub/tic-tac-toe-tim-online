@@ -250,6 +250,38 @@ describe("playMove", () => {
     const view = await manager.getRoomAs(code, "host-1");
     expect(view!.score).toEqual({ X: 1, O: 0, draws: 0 });
   });
+
+  it("serializa jogadas concorrentes do mesmo jogador (sem perder nem duplicar)", async () => {
+    await manager.createRoom({ code, hostId: "host-1" });
+    await manager.joinRoom({ code, guestId: "guest-1" });
+    const results = await Promise.allSettled([
+      manager.playMove({ code, userId: "host-1", pos: 0, moveId: "c1" }),
+      manager.playMove({ code, userId: "host-1", pos: 4, moveId: "c2" }),
+    ]);
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    const rejected = results.filter((r) => r.status === "rejected");
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    const view = await manager.getRoomAs(code, "host-1");
+    expect(view!.state.moveCount).toBe(1);
+    expect(view!.state.turn).toBe("O");
+    const filled = view!.state.board.filter((c) => c !== null);
+    expect(filled).toHaveLength(1);
+  });
+
+  it("aplicação concorrente do mesmo moveId resulta em uma única jogada", async () => {
+    await manager.createRoom({ code, hostId: "host-1" });
+    await manager.joinRoom({ code, guestId: "guest-1" });
+    const results = await Promise.allSettled([
+      manager.playMove({ code, userId: "host-1", pos: 0, moveId: "same" }),
+      manager.playMove({ code, userId: "host-1", pos: 0, moveId: "same" }),
+    ]);
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    expect(fulfilled.length).toBeGreaterThanOrEqual(1);
+    const view = await manager.getRoomAs(code, "host-1");
+    expect(view!.state.moveCount).toBe(1);
+    expect(view!.state.board[0]).toBe("X");
+  });
 });
 
 describe("restartGame", () => {

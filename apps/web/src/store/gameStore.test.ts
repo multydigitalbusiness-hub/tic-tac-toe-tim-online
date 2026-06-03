@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useGameStore } from "./gameStore.js";
+import { useGameStore, loadPersistedSession } from "./gameStore.js";
 import { newGame, type Score } from "@ttt/shared";
 
 const SCORE: Score = { X: 1, O: 0, draws: 0 };
 
 beforeEach(() => {
+  sessionStorage.clear();
   useGameStore.getState().reset();
 });
 
@@ -137,5 +138,61 @@ describe("gameStore - reset", () => {
     expect(s.version).toBe(0);
     expect(s.connection).toBe("disconnected");
     expect(s.error).toBeNull();
+  });
+});
+
+describe("gameStore - persistência de sessão", () => {
+  it("setRoom persiste code/token/youAre no sessionStorage", () => {
+    useGameStore.getState().setRoom({
+      code: "ABC234",
+      token: "jwt-123",
+      state: newGame(),
+      score: SCORE,
+      youAre: "X",
+      names: { X: "Alice" },
+      version: 2,
+    });
+    const raw = sessionStorage.getItem("ttt:session");
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.code).toBe("ABC234");
+    expect(parsed.token).toBe("jwt-123");
+    expect(parsed.youAre).toBe("X");
+  });
+
+  it("reset limpa a sessão persistida", () => {
+    useGameStore.getState().setRoom({
+      code: "ABC234",
+      token: "jwt-123",
+      state: newGame(),
+      score: SCORE,
+      youAre: "X",
+      names: {},
+      version: 0,
+    });
+    useGameStore.getState().reset();
+    expect(sessionStorage.getItem("ttt:session")).toBeNull();
+  });
+
+  it("loadPersistedSession restaura token/code/youAre se presentes", () => {
+    sessionStorage.setItem(
+      "ttt:session",
+      JSON.stringify({ code: "ZZZ234", token: "jwt-restored", youAre: "O" }),
+    );
+    const ok = loadPersistedSession();
+    expect(ok).toBe(true);
+    const s = useGameStore.getState();
+    expect(s.code).toBe("ZZZ234");
+    expect(s.token).toBe("jwt-restored");
+    expect(s.youAre).toBe("O");
+  });
+
+  it("loadPersistedSession retorna false quando não há sessão", () => {
+    expect(loadPersistedSession()).toBe(false);
+  });
+
+  it("loadPersistedSession retorna false com JSON corrompido", () => {
+    sessionStorage.setItem("ttt:session", "{not-json");
+    expect(loadPersistedSession()).toBe(false);
   });
 });

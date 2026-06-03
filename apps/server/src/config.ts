@@ -34,6 +34,16 @@ export type AppConfig = {
   logLevel: "silent" | "fatal" | "error" | "warn" | "info" | "debug" | "trace";
 };
 
+/** Segredos default/fracos que jamais devem ser usados em produção. */
+const FORBIDDEN_PROD_SECRETS = new Set([
+  "dev-secret-change-me-in-production-please",
+]);
+
+/** Conta caracteres distintos para detectar segredos de baixíssima entropia. */
+function distinctChars(s: string): number {
+  return new Set(s).size;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const result = envSchema.safeParse(env);
   if (!result.success) {
@@ -41,6 +51,23 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new ConfigError(issues);
   }
   const e = result.data;
+
+  if (e.NODE_ENV === "production") {
+    const prodIssues: string[] = [];
+    if (FORBIDDEN_PROD_SECRETS.has(e.JWT_SECRET)) {
+      prodIssues.push(
+        "JWT_SECRET: must not use the default development secret in production",
+      );
+    } else if (distinctChars(e.JWT_SECRET) < 8) {
+      prodIssues.push(
+        "JWT_SECRET: too low entropy for production (use a random secret, e.g. `openssl rand -hex 32`)",
+      );
+    }
+    if (prodIssues.length > 0) {
+      throw new ConfigError(prodIssues);
+    }
+  }
+
   return {
     port: e.PORT,
     nodeEnv: e.NODE_ENV,
