@@ -218,7 +218,7 @@ function GameOverOverlay({
       : "text-arcade-red";
   return (
     <div className="absolute inset-0 bg-arcade-bg/85 flex flex-col items-center justify-center gap-4 animate-pop-in">
-      <div className={`arcade-title text-2xl sm:text-3xl ${color} animate-flicker`}>
+      <div className={`arcade-title text-center text-2xl sm:text-3xl ${color} animate-flicker`}>
         {title}
       </div>
       <button

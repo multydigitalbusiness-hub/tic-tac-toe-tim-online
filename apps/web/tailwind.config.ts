@@ -44,8 +44,8 @@ const config: Config = {
       keyframes: {
         blink: { "50%": { opacity: "0" } },
         "glow-pulse": {
-          "0%, 100%": { filter: "drop-shadow(0 0 4px currentColor)" },
-          "50%": { filter: "drop-shadow(0 0 12px currentColor) drop-shadow(0 0 24px currentColor)" },
+          "0%, 100%": { filter: "drop-shadow(0 0 2px currentColor)" },
+          "50%": { filter: "drop-shadow(0 0 6px currentColor) drop-shadow(0 0 12px currentColor)" },
         },
         glitch: {
           "0%, 90%, 100%": { transform: "translate(0,0)" },
