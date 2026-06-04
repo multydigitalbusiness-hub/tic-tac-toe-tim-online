@@ -1,7 +1,7 @@
 {
   "framework": "vite",
-  "buildCommand": "pnpm --filter @ttt/shared build && pnpm --filter @ttt/web build && cp -r apps/web/dist dist",
-  "outputDirectory": "dist",
+  "buildCommand": "pnpm --filter @ttt/shared build && cd apps/web && npx vite build",
+  "outputDirectory": "apps/web/dist",
   "installCommand": "pnpm install --frozen-lockfile",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
