@@ -1,6 +1,5 @@
 {
-  "framework": "vite",
-  "buildCommand": "npx turbo run build --filter=@ttt/shared --filter=@ttt/web --force",
+  "buildCommand": "node scripts/vercel-build.mjs",
   "outputDirectory": "apps/web/dist",
   "installCommand": "pnpm install --frozen-lockfile",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
