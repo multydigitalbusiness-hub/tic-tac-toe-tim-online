@@ -93,14 +93,16 @@ async function main() {
   console.log("✓ Placar preservado no restart: X=", restarted.score.X);
 
   console.log("--- 8) nova rodada: X vence de novo ---");
-  xSock.emit("move", { pos: 0, id: "e2e-r2-x0" });
-  await waitForState(oSock, (v) => v.state.board[0] === "X" && v.state.moveCount === 1, "O");
   oSock.emit("move", { pos: 3, id: "e2e-r2-o3" });
-  await waitForState(xSock, (v) => v.state.board[3] === "O" && v.state.moveCount === 2, "X");
-  xSock.emit("move", { pos: 1, id: "e2e-r2-x1" });
-  await waitForState(oSock, (v) => v.state.board[1] === "X" && v.state.moveCount === 3, "O");
+  await waitForState(xSock, (v) => v.state.board[3] === "O" && v.state.moveCount === 1, "X");
+  xSock.emit("move", { pos: 0, id: "e2e-r2-x0" });
+  await waitForState(oSock, (v) => v.state.board[0] === "X" && v.state.moveCount === 2, "O");
   oSock.emit("move", { pos: 4, id: "e2e-r2-o4" });
-  await waitForState(xSock, (v) => v.state.board[4] === "O" && v.state.moveCount === 4, "X");
+  await waitForState(xSock, (v) => v.state.board[4] === "O" && v.state.moveCount === 3, "X");
+  xSock.emit("move", { pos: 1, id: "e2e-r2-x1" });
+  await waitForState(oSock, (v) => v.state.board[1] === "X" && v.state.moveCount === 4, "O");
+  oSock.emit("move", { pos: 6, id: "e2e-r2-o6" });
+  await waitForState(xSock, (v) => v.state.board[6] === "O" && v.state.moveCount === 5, "X");
   xSock.emit("move", { pos: 2, id: "e2e-r2-x2" });
   const finalView2 = await waitForState(oSock, (v) => v.state.status === "finished" && v.state.winner === "X" && v.score?.X === 2, "O");
   console.log("✓ Rodada 2 terminou. winner=", finalView2.state.winner, "placar=", JSON.stringify(finalView2.score));

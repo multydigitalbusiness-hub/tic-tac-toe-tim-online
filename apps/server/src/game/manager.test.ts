@@ -304,13 +304,14 @@ describe("restartGame", () => {
     expect(view.state.winner).toBeNull();
     expect(view.names.X).toBe("Alice");
     expect(view.names.O).toBe("Bob");
+    expect(view.state.turn).toBe("O");
   });
 
   it("permite novo jogo do zero após restart", async () => {
     await finishGame();
     await manager.restartGame({ code, userId: "host-1" });
-    const view = await manager.playMove({ code, userId: "host-1", pos: 0, moveId: "new1" });
-    expect(view.state.board[0]).toBe("X");
+    const view = await manager.playMove({ code, userId: "guest-1", pos: 0, moveId: "new1" });
+    expect(view.state.board[0]).toBe("O");
     expect(view.state.moveCount).toBe(1);
   });
 
@@ -338,7 +339,14 @@ describe("restartGame", () => {
   it("acumula score em múltiplas rodadas", async () => {
     await finishGame();
     await manager.restartGame({ code, userId: "host-1" });
-    for (const m of [{ u: "host-1", p: 0, id: "n1" }, { u: "guest-1", p: 3, id: "n2" }, { u: "host-1", p: 1, id: "n3" }, { u: "guest-1", p: 4, id: "n4" }, { u: "host-1", p: 2, id: "n5" }]) {
+    for (const m of [
+      { u: "guest-1", p: 3, id: "n1" },
+      { u: "host-1", p: 0, id: "n2" },
+      { u: "guest-1", p: 4, id: "n3" },
+      { u: "host-1", p: 1, id: "n4" },
+      { u: "guest-1", p: 6, id: "n5" },
+      { u: "host-1", p: 2, id: "n6" }
+    ]) {
       await manager.playMove({ code, userId: m.u, pos: m.p, moveId: m.id });
     }
     const view = await manager.getRoomAs(code, "host-1");

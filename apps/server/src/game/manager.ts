@@ -351,10 +351,15 @@ export function createGameManager(deps: GameDeps): GameManager {
       throw new RoomError("NOT_FINISHED", `cannot restart a game in progress`);
     }
 
+    const scoreX = parseInt(data.scoreX ?? "0", 10);
+    const scoreO = parseInt(data.scoreO ?? "0", 10);
+    const scoreDraw = parseInt(data.scoreDraw ?? "0", 10);
+    const nextTurn: Player = (scoreX + scoreO + scoreDraw) % 2 === 0 ? "X" : "O";
+
     const state = newGame();
     await redis.client.hset(k(opts.code), {
       board: boardToString(state.board),
-      turn: state.turn,
+      turn: nextTurn,
       status: "playing",
       winner: "",
       line: "",
